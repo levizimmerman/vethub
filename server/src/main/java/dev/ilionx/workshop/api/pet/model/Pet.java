@@ -20,6 +20,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Past;
 
 /**
  * Entity representing a pet.
@@ -41,8 +42,7 @@ public class Pet {
     )
     private String name;
 
-    // BUG: No @Past validation - future birth dates are allowed
-    // Students should add @Past
+    @Past
     @Column(
         name = "birth_date",
         nullable = false
