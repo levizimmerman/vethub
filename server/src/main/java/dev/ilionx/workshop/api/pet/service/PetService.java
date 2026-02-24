@@ -116,13 +116,18 @@ public class PetService {
     }
 
     /**
-     * Retrieves all pets in the system.
+     * Retrieves all pets in the system, optionally filtered by name (contains, case-insensitive).
+     * When name is null or blank, returns all pets.
      *
-     * @return list of all pets
+     * @param name optional name filter; pets whose name contains this string (case-insensitive) are returned
+     * @return list of matching pets
      */
     @Transactional(readOnly = true)
-    public List<Pet> findAll() {
-        return petRepository.findAll();
+    public List<Pet> findAll(final String name) {
+        if (name == null || name.isBlank()) {
+            return petRepository.findAll();
+        }
+        return petRepository.findByNameContainingIgnoreCase(name.trim());
     }
 
     /**

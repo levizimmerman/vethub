@@ -283,8 +283,8 @@ class PetServiceTest extends UnitTest {
         final List<Pet> expectedPets = List.of(firstPet, secondPet, thirdPet);
         given(petRepository.findAll()).willReturn(expectedPets);
 
-        // When: Finding all pets
-        final List<Pet> actualPets = petService.findAll();
+        // When: Finding all pets (no name filter)
+        final List<Pet> actualPets = petService.findAll(null);
 
         // Then: All pets should be returned
         assertThat(actualPets, is(notNullValue()));
@@ -303,8 +303,8 @@ class PetServiceTest extends UnitTest {
         // Given: No pets exist in the repository
         given(petRepository.findAll()).willReturn(Collections.emptyList());
 
-        // When: Finding all pets
-        final List<Pet> actualPets = petService.findAll();
+        // When: Finding all pets (no name filter)
+        final List<Pet> actualPets = petService.findAll(null);
 
         // Then: An empty list should be returned
         assertThat(actualPets, is(notNullValue()));
