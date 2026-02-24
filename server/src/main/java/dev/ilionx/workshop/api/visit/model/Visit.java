@@ -14,6 +14,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
 
 /**
  * Entity representing a veterinary visit for a pet.
@@ -35,8 +36,7 @@ public class Visit {
     )
     private LocalDate date;
 
-    // BUG: No @NotBlank validation - blank descriptions are allowed
-    // Students should add @NotBlank
+    @NotBlank
     @Column(name = "description")
     private String description;
 
