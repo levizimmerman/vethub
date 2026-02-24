@@ -52,6 +52,19 @@ The backend follows a **layered architecture** organized by domain:
 - **Centralized paths**: `Paths.java` for API path constants
 - **Error handling**: `ApiErrorCode` enum, `DataNotFoundException` for 404s
 
+### DTO Pattern (Backend)
+
+- **Request DTOs**: `model/request/` — `CreateXRequest`, `UpdateXRequest`. Use `@Data`, `@Accessors(chain = true)`, `@Schema` for OpenAPI.
+- **Response DTOs**: `model/response/` — `XResponse`, `XSummaryResponse` for nested/summary views.
+- **Mappers**: `model/mapper/` — MapStruct interfaces with `SharedMapperConfig.class`. Controllers call `mapper.toResponse(entity)` / `mapper.toResponseList(entities)`.
+- **New DTOs**: Add to the domain's `model/request` or `model/response` package; add mapper method if needed.
+
+### Liquibase Migrations
+
+- **Path**: `server/src/main/resources/db/changelog/`
+- **Master file**: `db.changelog-master.yaml` includes all changesets from `changesets/`
+- **New changesets**: Add XML files in `db/changelog/changesets/`. Naming: `YYYYMMDDHHMM-PREFIX-description.xml` (e.g. `202507101200-PRD-initial-schema.xml`)
+
 ---
 
 ## Build, Lint, and Test Commands
@@ -149,6 +162,7 @@ bun run download:api
 - Methods: camelCase (e.g., `findByLastName`)
 - Constants: UPPER_SNAKE_CASE
 - Packages: lowercase with dots (e.g., `dev.ilionx.workshop.api.owner`)
+- DTOs: `CreateXRequest`, `UpdateXRequest`, `XResponse`, `XSummaryResponse`
 
 **Architecture**
 - Follows layered architecture: controller -> service -> repository
@@ -157,16 +171,15 @@ bun run download:api
 - REST controllers return ResponseEntity with explicit status codes
 
 **Error Handling**
-- Use custom ApiErrorCode enum for error codes
+- **404 Not Found**: Throw `DataNotFoundException(ApiErrorCode.X_NOT_FOUND)` in services. Add new codes to `ApiErrorCode` enum when introducing new domains.
+- **Validation errors**: Validators throw `ValidationException(ValidationResult)` via `validateAndThrow()`. Use `OwnerValidator` as reference.
 - Return appropriate HTTP status codes (200, 201, 204, 404, 400)
-- Use @Valid for request validation
 
 **Testing**
-- Integration tests extend `IntegrationTest` base class
-- Unit tests extend `UnitTest` base class
+- **IntegrationTest**: Use for controller tests. Full Spring context, MockMvc, real DB. Extends `WebMvcConfigurator`. Use persistence factories (`aSavedOwner()`, `aSavedPet()`) and request factories (`aCreateOwnerRequest()`, `anUpdateOwnerRequest()`). DB is cleaned before/after each test.
+- **UnitTest**: Use for service tests, validator tests, mapper tests. Uses Mockito only—no Spring context, no DB. Use in-memory entity factories (`aValidOwner()`, `aValidPet()`, etc.) from `UnitTest`. Mock dependencies with `@Mock`/`@InjectMocks`.
 - Use Given-When-Then structure in test descriptions
 - Use @DisplayName for readable test names
-- Use test factories from IntegrationTest (e.g., `aSavedOwner()`)
 
 ### TypeScript/Svelte (Client)
 
@@ -193,7 +206,7 @@ bun run download:api
 **TypeScript**
 - Always enable strict mode (`strict: true`)
 - Use explicit types for function parameters
-- Use generated API types from `$lib/types/api.d.ts`
+- Use API types from `$lib/api/models.ts` (re-exports from generated `api.d.ts`)
 
 **Styling**
 - Use Tailwind CSS 4
@@ -202,9 +215,11 @@ bun run download:api
 - Use `tv` (tailwind-variants) for component variants
 
 **API Client**
-- Use openapi-fetch for type-safe API calls
-- API types generated from OpenAPI spec
-- Use the `client` from `$lib/api/client.ts`
+- Use `openapi-fetch` with auto-generated types from OpenAPI spec (`src/lib/types/api.d.ts`)
+- Import types from `$lib/api/models.ts` (re-exports) rather than directly from `api.d.ts`
+- Use the shared `client` from `$lib/api/client.ts` (Basic Auth, base URL)
+- Thin domain controllers in `$lib/api/{domain}/` (e.g. `OwnerController.ts`) — HTTP-only, no business logic. Call `client.GET/POST/PUT/DELETE` and throw on error
+- When adding new API types, add re-exports to `$lib/api/models.ts` after running openapi-sync
 
 ---
 
@@ -228,8 +243,9 @@ vethub/
 │       │   │   └── {domain}/  # controller, service, repository, model/
 │       │   ├── common/       # config, exception, security
 │       │   └── Application.java
-│       ├── main/resources/   # application.yml, Liquibase migrations
-│       └── test/java/        # IntegrationTest, UnitTest base classes
+│       ├── main/resources/   # application.yml
+│       │   └── db/changelog/ # Liquibase: db.changelog-master.yaml, changesets/
+│       └── test/java/        # support/UnitTest, support/IntegrationTest, support/util/WebMvcConfigurator
 ├── scripts/                   # openapi-sync.sh, common.sh
 └── mise.toml                 # Tool versions (Java, Node, Bun)
 ```
@@ -244,3 +260,4 @@ vethub/
 4. **Use test factories from IntegrationTest for creating test data**
 5. **Keep API types in sync - regenerate after backend changes**
 6. **API base path**: `/v1` (see `Paths.java`). All endpoints under `/api/v1/*`
+7. **Controller tests** → extend `IntegrationTest`. **Service/validator tests** → extend `UnitTest`
