@@ -39,8 +39,7 @@ public class Owner {
     )
     private String firstName;
 
-    // BUG: No @NotBlank validation - empty last names are allowed
-    // Students should add @NotBlank
+    @NotBlank
     @Column(
         name = "last_name",
         nullable = false
