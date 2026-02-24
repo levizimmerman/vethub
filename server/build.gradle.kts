@@ -14,7 +14,7 @@ java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(25)
         implementation = JvmImplementation.VENDOR_SPECIFIC
-        vendor = JvmVendorSpec.ADOPTIUM
+        vendor = JvmVendorSpec.ORACLE
     }
 }
 
