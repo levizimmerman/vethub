@@ -24,9 +24,9 @@ public class CreateVisitRequest {
     private LocalDate date;
 
     @Schema(
-        description = "Description of the visit",
+        description = "Description of the visit (optional)",
         example = "Rabies shot",
-        requiredMode = Schema.RequiredMode.REQUIRED
+        requiredMode = Schema.RequiredMode.NOT_REQUIRED
     )
     private String description;
 

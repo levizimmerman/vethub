@@ -14,10 +14,10 @@ import org.springframework.stereotype.Repository;
 public interface VisitRepository extends JpaRepository<Visit, Integer> {
 
     /**
-     * Finds all visits for the specified pet.
+     * Finds all visits for the specified pet, ordered by date descending (newest first).
      *
      * @param petId the pet's ID
      * @return list of visits for the given pet
      */
-    List<Visit> findByPetId(Integer petId);
+    List<Visit> findByPetIdOrderByDateDesc(Integer petId);
 }

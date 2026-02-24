@@ -24,9 +24,9 @@ public class UpdateVisitRequest {
     private LocalDate date;
 
     @Schema(
-        description = "Description of the visit",
+        description = "Description of the visit (optional)",
         example = "Follow-up checkup",
-        requiredMode = Schema.RequiredMode.REQUIRED
+        requiredMode = Schema.RequiredMode.NOT_REQUIRED
     )
     private String description;
 

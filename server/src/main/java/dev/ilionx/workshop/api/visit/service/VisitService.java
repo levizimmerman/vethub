@@ -37,7 +37,7 @@ public class VisitService {
     public List<Visit> findByPetId(final Integer petId) {
         petRepository.findById(petId)
             .orElseThrow(() -> new DataNotFoundException(PET_NOT_FOUND));
-        return visitRepository.findByPetId(petId);
+        return visitRepository.findByPetIdOrderByDateDesc(petId);
     }
 
     /**

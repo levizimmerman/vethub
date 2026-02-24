@@ -172,7 +172,9 @@
 										<Stethoscope class="h-5 w-5 text-success" />
 									</div>
 									<div>
-										<p class="font-medium text-foreground">{visit.description}</p>
+										<p class="font-medium text-foreground">
+											{visit.description?.trim() || '—'}
+										</p>
 										<p class="text-sm text-muted-foreground">{formatDate(visit.date)}</p>
 									</div>
 								</div>

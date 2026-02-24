@@ -2,6 +2,7 @@
 	import { page } from '$app/stores';
 	import { goto } from '$app/navigation';
 	import { createVisitForPet } from '$lib/api/visit/VisitController';
+	import { getApiErrorMessage } from '$lib/api/errors';
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
@@ -23,12 +24,13 @@
 		try {
 			await createVisitForPet(ownerId, petId, {
 				date: visitDate,
-				description: description.trim()
+				description: description.trim() || undefined
 			});
 			toast.success('Visit recorded successfully');
 			goto(`/owners/${ownerId}/pets/${petId}`);
-		} catch (err) {
-			toast.error('Failed to create visit');
+		} catch (err: unknown) {
+			const message = getApiErrorMessage(err);
+			toast.error(message ?? 'Failed to create visit');
 			console.error('Error:', err);
 		} finally {
 			submitting = false;
@@ -66,13 +68,12 @@
 			</div>
 
 			<div class="space-y-2">
-				<Label for="description">Description</Label>
+				<Label for="description">Description (optional)</Label>
 				<Textarea
 					id="description"
 					bind:value={description}
 					placeholder="Describe the reason for the visit (e.g., Annual checkup, Vaccination, etc.)"
 					rows={4}
-					required
 					disabled={submitting}
 				/>
 			</div>

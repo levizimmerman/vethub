@@ -62,7 +62,7 @@ class VisitServiceTest extends UnitTest {
         secondVisit.setDescription("Annual checkup");
         final List<Visit> expectedVisits = List.of(firstVisit, secondVisit);
         given(petRepository.findById(VALID_PET_ID)).willReturn(Optional.of(pet));
-        given(visitRepository.findByPetId(VALID_PET_ID)).willReturn(expectedVisits);
+        given(visitRepository.findByPetIdOrderByDateDesc(VALID_PET_ID)).willReturn(expectedVisits);
 
         // When: Finding visits by pet ID
         final List<Visit> actualVisits = visitService.findByPetId(VALID_PET_ID);
@@ -82,7 +82,7 @@ class VisitServiceTest extends UnitTest {
         // Given: A pet exists with no visits
         final Pet pet = aValidPet();
         given(petRepository.findById(VALID_PET_ID)).willReturn(Optional.of(pet));
-        given(visitRepository.findByPetId(VALID_PET_ID)).willReturn(Collections.emptyList());
+        given(visitRepository.findByPetIdOrderByDateDesc(VALID_PET_ID)).willReturn(Collections.emptyList());
 
         // When: Finding visits by pet ID
         final List<Visit> actualVisits = visitService.findByPetId(VALID_PET_ID);

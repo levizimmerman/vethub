@@ -17,6 +17,7 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import static dev.ilionx.workshop.api.Paths.PET_VISITS;
 import static dev.ilionx.workshop.api.Paths.PET_VISIT_BY_ID;
+import static dev.ilionx.workshop.api.visit.model.validator.VisitValidator.DATE_REQUIRED;
 import static dev.ilionx.workshop.common.exception.ApiErrorCode.PET_NOT_FOUND;
 import static dev.ilionx.workshop.common.exception.ApiErrorCode.VISIT_NOT_FOUND;
 import static io.github.jframe.util.mapper.ObjectMappers.fromJson;
@@ -170,6 +171,30 @@ class VisitControllerTest extends IntegrationTest {
         final String content = response.andReturn().getResponse().getContentAsString();
         final ErrorResponseResource error = fromJson(content, ErrorResponseResource.class);
         assertThat(error.getErrorMessage(), is(equalTo(PET_NOT_FOUND.getReason())));
+    }
+
+    @Test
+    @DisplayName("Should return bad request with clear message when date is missing on create visit")
+    void shouldReturnBadRequestWhenDateIsMissingOnCreateVisit() throws Exception {
+        // Given: An owner with a pet exists and a create visit request without date
+        final Owner savedOwner = aSavedOwner();
+        final Pet savedPet = aSavedPet(savedOwner);
+        final CreateVisitRequest request = new CreateVisitRequest();
+        request.setDate(null);
+        request.setDescription("Checkup");
+
+        // When: Creating the visit via POST
+        final ResultActions response = mockMvc.perform(
+            post(PET_VISITS, savedOwner.getId(), savedPet.getId())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(toJson(request))
+        );
+
+        // Then: HTTP 400 Bad Request should be returned with validation message
+        response.andExpect(status().isBadRequest());
+
+        final String content = response.andReturn().getResponse().getContentAsString();
+        assertThat(content, containsString(DATE_REQUIRED));
     }
 
     // ========================= GET BY ID =========================

@@ -33,9 +33,9 @@ public class VisitSummaryResponse {
     private LocalDate date;
 
     @Schema(
-        description = "The visit description",
+        description = "The visit description (optional)",
         example = "Rabies shot",
-        requiredMode = Schema.RequiredMode.REQUIRED
+        requiredMode = Schema.RequiredMode.NOT_REQUIRED
     )
     private String description;
 }
