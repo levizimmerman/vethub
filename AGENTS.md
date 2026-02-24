@@ -10,6 +10,50 @@ VetHub is a veterinary clinic management system with:
 
 ---
 
+## Architecture
+
+### High-Level
+
+Client-server architecture with a SvelteKit SPA frontend and Spring Boot REST API backend. Communication is HTTP/JSON. The API is documented via OpenAPI (Swagger), and the frontend uses generated types for type-safe API calls.
+
+### Backend Structure
+
+The backend follows a **layered architecture** organized by domain:
+
+- **Controller** → **Service** → **Repository**
+- Each domain (owner, pet, visit, vet, specialty) has its own package under `dev.ilionx.workshop.api.*`
+- Per-domain packages contain: `controller`, `service`, `repository`, `model` (with `request`, `response`, `mapper`, `validator` subpackages)
+- Shared code lives in `dev.ilionx.workshop.common` (config, exception, security)
+
+### Request Flow
+
+1. **Frontend**: Page/component calls an API controller (e.g. `getOwners()` in `OwnerController.ts`)
+2. **API client**: `openapi-fetch` sends HTTP request to `http://localhost:8080/api/v1/*` with Basic Auth
+3. **Backend**: Spring Security validates credentials and CORS
+4. **Controller**: Receives request, optionally runs validator, delegates to service
+5. **Service**: Business logic, `@Transactional`, calls repository
+6. **Repository**: Spring Data JPA queries H2 database
+7. **Response**: Entity → MapStruct mapper → DTO → JSON → frontend
+
+### Frontend-Backend Connection
+
+- **Client**: `openapi-fetch` in `$lib/api/client.ts` creates a typed client from OpenAPI paths
+- **Base URL**: `http://localhost:8080/api` (configurable via `VITE_SERVER_BASE_URL`)
+- **Auth**: Basic Auth (default `user`/`password`, configurable via `VITE_API_USERNAME`/`VITE_API_PASSWORD`)
+- **Type sync**: Run `scripts/openapi-sync.sh` after API changes to regenerate `src/lib/types/api.d.ts`
+
+### Patterns Used
+
+- **Layered architecture**: Controller → Service → Repository
+- **DTO pattern**: Request/response DTOs separate from JPA entities
+- **MapStruct**: Entity ↔ DTO mapping
+- **Repository pattern**: Spring Data JPA
+- **Validator pattern**: Custom validators (e.g. `OwnerValidator`) for business rules
+- **Centralized paths**: `Paths.java` for API path constants
+- **Error handling**: `ApiErrorCode` enum, `DataNotFoundException` for 404s
+
+---
+
 ## Build, Lint, and Test Commands
 
 ### Server (Java/Spring Boot)
@@ -171,17 +215,23 @@ vethub/
 ├── client/                    # SvelteKit frontend
 │   └── src/
 │       ├── lib/
-│       │   ├── api/          # API clients and controllers
-│       │   ├── components/   # UI components
-│       │   ├── config/       # Configuration constants
-│       │   └── types/        # TypeScript types
-│       └── routes/           # SvelteKit routes
+│       │   ├── api/          # API layer: client.ts + domain controllers (Owner, Pet, Visit, Vet, Specialty)
+│       │   ├── components/   # UI components (layout, owners, pets, vets, ui/)
+│       │   ├── config/       # Configuration (constants.ts)
+│       │   └── types/        # TypeScript types (api.d.ts from OpenAPI)
+│       └── routes/           # SvelteKit file-based routing
 ├── server/                    # Spring Boot backend
 │   └── src/
-│       ├── main/java/        # Application code
-│       └── test/java/        # Test code
-├── scripts/                   # Build/utility scripts
-└── mise.toml                 # Tool versions
+│       ├── main/java/dev/ilionx/workshop/
+│       │   ├── api/          # Domain APIs (owner, pet, visit, vet)
+│       │   │   ├── Paths.java
+│       │   │   └── {domain}/  # controller, service, repository, model/
+│       │   ├── common/       # config, exception, security
+│       │   └── Application.java
+│       ├── main/resources/   # application.yml, Liquibase migrations
+│       └── test/java/        # IntegrationTest, UnitTest base classes
+├── scripts/                   # openapi-sync.sh, common.sh
+└── mise.toml                 # Tool versions (Java, Node, Bun)
 ```
 
 ---
@@ -193,3 +243,4 @@ vethub/
 3. **After modifying API, run `../scripts/openapi-sync.sh` to regenerate types**
 4. **Use test factories from IntegrationTest for creating test data**
 5. **Keep API types in sync - regenerate after backend changes**
+6. **API base path**: `/v1` (see `Paths.java`). All endpoints under `/api/v1/*`
